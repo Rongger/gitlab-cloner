@@ -2,6 +2,7 @@ const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const exec = util.promisify(require('child_process').exec);
+const { getLogger } = require('./logger');
 
 async function main() {
   try {
@@ -17,6 +18,7 @@ async function main() {
 async function clone(urls = [], concurrency = 2) {
   const _urls = urls.concat();
   const errors = [];
+  const logger = getLogger();
   const output = path.resolve(
     process.env.HOME,
     `repos_${Math.random().toString().slice(2, 8)}`
@@ -29,7 +31,7 @@ async function clone(urls = [], concurrency = 2) {
       next.map((i) => {
         console.log(`Start clone ${i}...`);
         return exec(`git clone ${i}`, { cwd: output }).catch((e) => {
-          console.log(e);
+          logger.error(e);
           errors.push(e);
         });
       })
