@@ -5,7 +5,7 @@ const exec = util.promisify(require('child_process').exec);
 
 async function main() {
   try {
-    const raw = fs.readFileSync(`./data/web.json`).toString();
+    const raw = fs.readFileSync(`./repos.json`).toString();
     const urls = JSON.parse(raw).data;
     const errors = await clone(urls);
     console.log(`clone done. total: ${urls.length}, error: ${errors.length}`);

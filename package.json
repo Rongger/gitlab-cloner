@@ -1,12 +1,11 @@
 {
-  "name": "batch_cloner",
+  "name": "gitlab-cloner",
   "version": "1.0.0",
-  "description": "",
-  "main": "main.js",
+  "description": "Clone gitlab repos",
   "scripts": {
-    "start": "node ./main.js",
+    "start": "npm run download && npm run clone",
+    "clone": "node ./clone.js",
     "download": "node ./download.js"
   },
-  "author": "",
   "license": "ISC"
 }

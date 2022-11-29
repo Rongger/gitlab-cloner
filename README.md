@@ -1,3 +1,3 @@
-# batch_cloner
+# gitlab-cloner
 
-Clone for gitlab.
+Clone gitlab repos.

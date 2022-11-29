@@ -1,31 +1,29 @@
 const util = require('util');
 const fs = require('fs');
 const exec = util.promisify(require('child_process').exec);
-const { curl, GIT_HOST } = require('./request');
+const { host, token } = require('./request');
 
-async function getRepoUrls(curl) {
-  let _curl = curl;
-  const urls = [];
+async function getRepos() {
+  let page = 1;
+  let pageSize = 50;
   let finished = false;
-  let [, prev, page, next] = curl.match(/(.*page=)(\d)(.*)/);
-  page = Number(page);
+  const urls = [];
 
   while (!finished) {
-    const { stdout } = await exec(_curl);
+    const cmd = `curl "https://${host}/api/v4/projects?access_token=${token}&per_page=${pageSize}&page=${page}&order_by=name&sort=asc"`;
+    const { stdout } = await exec(cmd);
     const res = JSON.parse(stdout);
+    console.log(`Download page ${page} done, count: ${res.length}`);
     res.forEach((i) => {
-      urls.push(
-        `git@${GIT_HOST}:${i?.relative_path.replace(/^\/(.*)/, '$1')}.git`
-      );
+      urls.push(i?.ssh_url_to_repo);
     });
     page++;
-    _curl = `${prev}${page}${next}`;
     finished = res.length === 0;
   }
 
   return Array.from(new Set(urls));
 }
 
-getRepoUrls(curl).then((urls) => {
-  fs.writeFileSync(`data.json`, JSON.stringify({ data: urls }));
+getRepos().then((urls) => {
+  fs.writeFileSync(`repos.json`, JSON.stringify({ data: urls }));
 });
