@@ -15,30 +15,38 @@ async function main() {
   }
 }
 
-async function clone(urls = [], concurrency = 2) {
+async function clone(urls = [], limits = 2) {
   const _urls = urls.concat();
+  const pools = new Set();
   const errors = [];
   const logger = getLogger();
-  const output = path.resolve(
-    process.env.HOME,
-    `repos_${Math.random().toString().slice(2, 8)}`
-  );
+  const output = path.resolve(process.env.HOME, `repos_${genHash()}`);
   fs.mkdirSync(output);
 
-  let next = _urls.splice(0, concurrency);
-  while (next.length !== 0) {
-    await Promise.all(
-      next.map((i) => {
-        console.log(`Start clone ${i}...`);
-        return exec(`git clone ${i}`, { cwd: output }).catch((e) => {
-          logger.error(e);
-          errors.push(e);
-        });
-      })
-    );
-    next = _urls.splice(0, concurrency);
+  while (_urls.length !== 0) {
+    const url = _urls.shift();
+
+    const task = () => {
+      console.log(`Start clone ${url}...`);
+      return exec(`git clone ${url}`, { cwd: output }).catch((e) => {
+        logger.error(e);
+        errors.push(e);
+      });
+    };
+    const promise = task();
+    const clean = () => pools.delete(promise);
+    promise.finally(clean);
+    pools.add(promise);
+
+    if (pools.size >= limits) {
+      await Promise.race(pools);
+    }
   }
   return errors;
+}
+
+function genHash() {
+  return Math.random().toString().slice(2, 8);
 }
 
 main();
